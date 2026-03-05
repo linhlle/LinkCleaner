@@ -11,14 +11,29 @@ chrome.runtime.onInstalled.addListener(() => {
 function cleanUrl(originalUrl) {
     try {
         const url = new URL(originalUrl);
-        const trashParams = [
-            "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", // Google
-            "fbclid", "igshid", "ttclid", // Meta & TikTok
-            "gclid", "mc_eid", "msclkid", // Ads
-            "si", "feature", // YouTube
-            "list", "index"
-        ];
-        trashParams.forEach(param => url.searchParams.delete(param));
+
+        // 1. Handle Amazon Sponsored Links (/sspa/click)
+        if (url.pathname.includes('/sspa/click')) {
+            const redirectPath = url.searchParams.get('url');
+            if (redirectPath) {
+                const cleanBase = "https://www.amazon.com" + decodeURIComponent(redirectPath);
+                const finalUrl = new URL(cleanBase);
+                finalUrl.pathname = finalUrl.pathname.replace(/\/ref=.*$/, "");
+                finalUrl.search = ""; 
+                return finalUrl.toString();
+            }
+        }        
+
+        const keepParams = ["v"]; 
+        const currentParams = Array.from(url.searchParams.keys());
+        currentParams.forEach(param => {
+            if (!keepParams.includes(param)) {
+                url.searchParams.delete(param);
+            }
+        });
+
+        // Amazon special fix: many Amazon links put tracking in the PATH (the /ref=...)
+        url.pathname = url.pathname.replace(/\/ref=.*$/, "");
 
         return url.toString();
     } catch (e) {
@@ -33,8 +48,8 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: (before, after) => {
-                alert("BEFORE:\n" + before + "\n\nAFTER:\n" + after);
-                console.log("BEFORE:\n" + before + "\n\nAFTER:\n" + after);
+                // alert("BEFORE:\n" + before + "\n\nAFTER:\n" + after);
+                // console.log("BEFORE:\n" + before + "\n\nAFTER:\n" + after);
 
                 navigator.clipboard.writeText(after).then(() => {
                     const notify = document.createElement('div');
