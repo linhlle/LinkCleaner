@@ -1,0 +1,19 @@
+{
+    "manifest_version": 3,
+    "name": "LinkPage: Clean URL Sharer",
+    "version": "1.0",
+    "description": "Removes tracking parameters from links before you share them.",
+    "permissions": [
+        "contextMenus",
+        "scripting"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "icons": {
+        "48": "icon.png"
+    }
+}
